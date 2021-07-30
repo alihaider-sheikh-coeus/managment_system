@@ -2,10 +2,15 @@
 
 namespace App\Controller;
 
+use App\Entity\Review;
 use App\Repository\ReviewRepository;
 use App\Repository\ShopRepository;
 use App\Repository\UserRepository;
 use App\Service\AutherizedApiAccess;
+use App\Service\PaginationService;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Tools\Pagination\Paginator;
+use phpDocumentor\Reflection\Types\Float_;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,25 +24,29 @@ class ReviewController extends AbstractController
     private $shopRepository;
     private $userRepository;
     private $authorizedApiAccess;
-    public function __construct(ReviewRepository $reviewRepository,ShopRepository $shopRepository,UserRepository $userRepository,AutherizedApiAccess $autherizedApiAccess)
+    private $manager;
+    public function __construct(ReviewRepository $reviewRepository,EntityManagerInterface $manager,ShopRepository $shopRepository,UserRepository $userRepository,AutherizedApiAccess $autherizedApiAccess)
     {
         $this->reviewRepository=$reviewRepository;
         $this->shopRepository=$shopRepository;
         $this->userRepository=$userRepository;
         $this->authorizedApiAccess=$autherizedApiAccess;
+        $this->manager=$manager;
     }
-
+    const ITEMS_PER_PAGE = 2;
     /**
      * @Route("/reviews", name="review",methods={"GET"})
      */
-    public function index(): Response
+    public function index(Request $request,PaginationService $pagination):Response
     {
-        $reviews = $this->reviewRepository->findAll();
-
+        $query   = $this->getDoctrine()->getManager()->getRepository(Review::class)->createQueryBuilder('d');
+        $results = $pagination->paginate($query, $request, self::ITEMS_PER_PAGE);
+//        dd($results);
         return $this->render('review/index.html.twig', [
-            "reviews"=>$reviews
+            'reviews' => $results,
+            'lastPage' => $pagination->lastPage($results)
         ]);
-    }
+  }
     /**
      * @Route("/status_update/{id}/{status}", name="status_update",methods={"GET"})
      */
@@ -86,5 +95,32 @@ class ReviewController extends AbstractController
         }
         return $response;
   }
+    /**
+     * Paginator Helper
+     *
+     * Pass through a query object, current page & limit
+     * the offset is calculated from the page and limit
+     * returns an `Paginator` instance, which you can call the following on:
+     *
+     *     $paginator->getIterator()->count() # Total fetched (ie: `5` posts)
+     *     $paginator->count() # Count of ALL posts (ie: `20` posts)
+     *     $paginator->getIterator() # ArrayIterator
+     *
+     * @param Doctrine\ORM\Query $dql   DQL Query Object
+     * @param integer            $page  Current page (defaults to 1)
+     * @param integer            $limit The total number per page (defaults to 5)
+     *
+     * @return \Doctrine\ORM\Tools\Pagination\Paginator
+     */
+    public function paginate($dql, $page, $limit)
+    {
+        $paginator = new Paginator($dql);
+
+        $paginator->getQuery()
+            ->setFirstResult($limit * ($page - 1)) // Offset
+            ->setMaxResults($limit); // Limit
+
+        return $paginator;
+    }
 
 }
