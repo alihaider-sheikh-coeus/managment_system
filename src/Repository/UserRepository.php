@@ -48,18 +48,26 @@ class UserRepository extends ServiceEntityRepository
             ->setParameter('id',$id);
         return  $qb->getQuery()->getResult();
     }
-    public function saveAdmin($email, $password, $superAdmin,$roles,$name)
+    public function getUserObject($id)
     {
-        $newUser = new User();
+        $qb = $this->manager->createQueryBuilder();
 
-        $encoded = $this->passwordEncoder->encodePassword($newUser, $password);
+        $qb->select('user')
+            ->from('App:User', 'user')
+            ->where('user.id = :userId')
+            ->setParameter('userId',$id);
 
+        return $qb->getQuery()->getResult();
+    }
+    public function saveAdmin($newUser,$data)
+    {
+      $encoded = $this->passwordEncoder->encodePassword($newUser, $data['password']);
         $newUser
-            ->setEmail($email)
+            ->setEmail($data['email'])
             ->setPassword($encoded)
-            ->setName($name)
-            ->setSuperAdmin($superAdmin)
-            ->setRoles($roles);
+            ->setName($data['name'])
+            ->setSuperAdmin($data['superAdmin'])
+            ->setRoles($data['roles']);
 
         $this->manager->persist($newUser);
         $this->manager->flush();
@@ -78,6 +86,19 @@ class UserRepository extends ServiceEntityRepository
 
         return $user;
     }
+    public function userPasswordMatch($userObject,$currentPassword):bool
+    {
+       return $this->passwordEncoder->isPasswordValid($userObject, $currentPassword);
+     }
+    public function passwordUpdate($id,$newPassword)
+    {
+        $user=$this->getUserObject($id);
+        $encoded = $this->passwordEncoder->encodePassword($user[0], $newPassword);
+        $user[0]->setPassword($encoded);
+        $this->manager->persist($user[0]);
+        $this->manager->flush();
+    }
+
 
     public function validateUserId(int $id) {
         return  $this->findOneBy(['id'=>$id

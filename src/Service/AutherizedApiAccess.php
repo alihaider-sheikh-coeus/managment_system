@@ -29,6 +29,7 @@ class AutherizedApiAccess
 //        $data = array();
         $apikey = $request->headers->get('api_key');
         $apiSecret =$request->headers->get('api_secret');
+
         $response=true;
         if($apikey=="" || $apiSecret=="")
         {
@@ -38,6 +39,7 @@ class AutherizedApiAccess
         {
             $response=false;
         }
+
   return $response;
     }
 }

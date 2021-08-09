@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Repository\AdminRepository;
 use App\Repository\UserRepository;
 use App\Service\AutherizedApiAccess;
@@ -12,16 +13,19 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Validator\ValidatorBuilder;
 
 class UserController extends AbstractController
 {
-    private $userRepository,$passwordEncoder,$authorizedApiAccess;
+    private $userRepository,$passwordEncoder,$authorizedApiAccess,$validator;
 
-    public function __construct(UserRepository $userRepository,UserPasswordEncoderInterface $passwordEncoder,AutherizedApiAccess $autherizedApiAccess)
+    public function __construct(UserRepository $userRepository,UserPasswordEncoderInterface $passwordEncoder,AutherizedApiAccess $autherizedApiAccess,ValidatorInterface $validator)
     {
         $this->userRepository=$userRepository;
         $this->passwordEncoder=$passwordEncoder;
         $this->authorizedApiAccess=$autherizedApiAccess;
+        $this->validator=$validator;
     }
 
     /**
@@ -30,7 +34,7 @@ class UserController extends AbstractController
     public function add(Request $request): JsonResponse
     {
         $check=$this->authorizedApiAccess->authorize($request);
-//        $data=array();
+        $response=array();
         if(!$check)
         {
             $data=["message"=>"user is unauthorized"];
@@ -39,20 +43,20 @@ class UserController extends AbstractController
         else {
 
             $data = json_decode($request->getContent(), true);
+            $newUser = new User();
+            $newUser->setEmail($data['email']);
+            $newUser->setPassword($data['password']);
+            $newUser->setSuperAdmin( $data['superAdmin']);
+            $newUser->setName( $data['name']);
+            $newUser->setRoles($data['roles']);
+            $errors=$this->validator->validate($newUser);
 
-            $email = $data['email'];
-            $password = $data['password'];
-            $superAdmin = $data['superAdmin'];
-            $name = $data['name'];
-            $roles = $data['roles'];
-
-            if (empty($email) || empty($password) || empty($superAdmin) || empty($roles)) {
-                throw new NotFoundHttpException('Expecting mandatory parameters!');
+            if (count($errors) > 0) {
+                $response= new JsonResponse(["error"=>$errors[0]->getMessage()],Response::HTTP_UNPROCESSABLE_ENTITY);
+            } else {
+                $this->userRepository->saveAdmin($newUser,$data);
+                $response= new  JsonResponse(['status' => 'Admin created!'], Response::HTTP_CREATED);
             }
-
-            $this->userRepository->saveAdmin($email, $password, $superAdmin, $roles, $name);
-
-            $response= new  JsonResponse(['status' => 'Admin created!'], Response::HTTP_CREATED);
         }
         return $response;
     }
@@ -142,7 +146,6 @@ class UserController extends AbstractController
     {
         $user = $this->userRepository->findOneBy(['id' => $id]);
         $check=$this->authorizedApiAccess->authorize($request);
-        $data=array();
         if(!$check)
         {
             $data=["message"=>"user is unauthorized"];
@@ -168,7 +171,4 @@ class UserController extends AbstractController
         }
     return $response;
     }
-
-
-
 }

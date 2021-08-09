@@ -1,16 +1,30 @@
 {% extends 'base.html.twig' %}
 
+
 {% block title %}Hello ReviewController!{% endblock %}
 
 {% block body %}
+    {% include 'navbar.html.twig' %}
 <style>
     .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
     .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
 </style>
-
+    {% if app.session.flashBag.has('success') %}
+        <div class="alert alert-error fade in" role="alert">
+            {% for msg in app.session.flashBag.get('success') %}
+                {{ msg }}
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% if app.session.flashBag.has('error') %}
+        <div class="alert alert-error fade in" role="alert">
+        {% for msg in app.session.flashBag.get('error') %}
+                {{ msg }}
+            {% endfor %}
+        </div>
+    {% endif %}
 <div class="example-wrapper">
         <h3>Reviews</h3>
-    <a class="nav-link" href="{{ path('app_logout') }}">Logout</a>
     <div class="row" style = margin-bottom:55px;">
         <div class="col-md-12">
             <table id="ftable" class="table table-condensed table-striped table-bordered" cellspacing="0" width="100%">
@@ -30,10 +44,10 @@
                         {% if is_granted('ROLE_SUPER_ADMIN') %}
                             {% if review.status =="pending" %}
                             <td class = "actions">
-                                <a href="{{ path('status_update', { 'id': review.id,'status':"approve" }) }}"
+                                <a href="{{ path('status_update', { 'id': review.id,'status':"Approved" }) }}"
                                    class = "btn btn-sm btn-info glyphicon-ok"  title="approve"> Approve</a>
 
-                                    <a href="{{ path('status_update', { 'id': review.id,'status':"reject" }) }}"
+                                    <a href="{{ path('status_update', { 'id': review.id,'status':"Rejected" }) }}"
                                        class = "btn btn-sm btn-primary glyphicon glyphicon-remove"  title="reject">Reject</a>
                             </td>
                                 {% else %}

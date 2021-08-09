@@ -30,7 +30,7 @@ class UserFixture extends Fixture
         ));
             $user1->setEmail("superAdmin@gmail.com");
             $user1->setSuperAdmin(true);
-            $user1->setRoles(["SUPER_ADMIN"]);
+            $user1->setRoles(["ROLE_SUPER_ADMIN"]);
             $manager->persist($user1);
 
         $user2 = new User();
@@ -41,7 +41,7 @@ class UserFixture extends Fixture
         ));
         $user2->setEmail("simpleUser@gmail.com");
         $user2->setSuperAdmin(false);
-        $user2->setRoles(["USER"]);
+        $user2->setRoles(["ROLE_USER"]);
         $manager->persist($user2);
 
         $manager->flush();

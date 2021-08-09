@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\ReviewRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * @ORM\Entity(repositoryClass=ReviewRepository::class)
@@ -20,6 +21,11 @@ class Review
 
     /**
      * @ORM\Column(type="string", length=255)
+     *   @Assert\Regex(
+     *     pattern="/\d/",
+     *     match=false,
+     *     message="Your review cannot contain a number"
+     * )
      */
     private $content;
 

@@ -20,6 +20,7 @@ class PaginationService
     public function paginate($query, Request $request, int $limit): Paginator
     {
         $currentPage = $request->query->getInt('p') ?: 1;
+//        dd($currentPage);
         $paginator = new Paginator($query);
         $paginator
             ->getQuery()

@@ -33,15 +33,16 @@ class ReviewController extends AbstractController
         $this->authorizedApiAccess=$autherizedApiAccess;
         $this->manager=$manager;
     }
-    const ITEMS_PER_PAGE = 2;
+    const ITEMS_PER_PAGE = 4;
     /**
      * @Route("/reviews", name="review",methods={"GET"})
      */
     public function index(Request $request,PaginationService $pagination):Response
     {
-        $query   = $this->getDoctrine()->getManager()->getRepository(Review::class)->createQueryBuilder('d');
+        $query   = $this->getDoctrine()->getManager()->getRepository(Review::class)->createQueryBuilder('p');
+
         $results = $pagination->paginate($query, $request, self::ITEMS_PER_PAGE);
-//        dd($results);
+
         return $this->render('review/index.html.twig', [
             'reviews' => $results,
             'lastPage' => $pagination->lastPage($results)
@@ -50,10 +51,15 @@ class ReviewController extends AbstractController
     /**
      * @Route("/status_update/{id}/{status}", name="status_update",methods={"GET"})
      */
-    public function statusUpdate($id,$status)
+    public function statusUpdate(Request $request,$id,$status)
     {
+//        dd($status);
        $this->reviewRepository->updateStatus($id,$status);
-       return $this->redirectToRoute('review');
+
+        $referer = $request->headers->get('referer');
+
+       ($status === "approve")? $this->addFlash('success', 'Review has been approved.'):$this->addFlash('error', 'Review has been rejected.');
+        return $this->redirect($referer);
     }
 
     /**
@@ -61,19 +67,19 @@ class ReviewController extends AbstractController
      */
     public function add(Request $request): Response
     {
-        $data = json_decode($request->getContent(), true);
-
-
-        $userStatus = $this->userRepository->validateUserId($data['user_id']);
-
-        $shopStatus=$this->shopRepository->validateShopId($data['shop_id']);
         $check=$this->authorizedApiAccess->authorize($request);
         if(!$check)
         {
             $data=["message"=>"user is unauthorized"];
-            $response= new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
+            return new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
         }
-       elseif(empty($userStatus))
+
+        $data = json_decode($request->getContent(), true);
+
+        $userStatus = $this->userRepository->validateUserId($data['user_id']);
+
+        $shopStatus=$this->shopRepository->validateShopId($data['shop_id']);
+       if(empty($userStatus))
         {
             $data=["message"=>"user is not found!"];
             $response= new JsonResponse($data, Response::HTTP_NOT_FOUND);
@@ -93,34 +99,7 @@ class ReviewController extends AbstractController
             $this->reviewRepository->saveReview($content, $status,$shopStatus,$userStatus);
            $response= new JsonResponse(['status' => 'Review created!'], Response::HTTP_CREATED);
         }
+//        $this->
         return $response;
   }
-    /**
-     * Paginator Helper
-     *
-     * Pass through a query object, current page & limit
-     * the offset is calculated from the page and limit
-     * returns an `Paginator` instance, which you can call the following on:
-     *
-     *     $paginator->getIterator()->count() # Total fetched (ie: `5` posts)
-     *     $paginator->count() # Count of ALL posts (ie: `20` posts)
-     *     $paginator->getIterator() # ArrayIterator
-     *
-     * @param Doctrine\ORM\Query $dql   DQL Query Object
-     * @param integer            $page  Current page (defaults to 1)
-     * @param integer            $limit The total number per page (defaults to 5)
-     *
-     * @return \Doctrine\ORM\Tools\Pagination\Paginator
-     */
-    public function paginate($dql, $page, $limit)
-    {
-        $paginator = new Paginator($dql);
-
-        $paginator->getQuery()
-            ->setFirstResult($limit * ($page - 1)) // Offset
-            ->setMaxResults($limit); // Limit
-
-        return $paginator;
-    }
-
 }
