@@ -96,11 +96,13 @@ class ReviewController extends AbstractController
         else
         {
             $review= new Review();
+            $review->setContent($data['content']);
+            $review->setStatus($data['status']);
             $errors=$this->validator->validate($review);
             if (count($errors) > 0) {
                 $response= new JsonResponse(["error"=>$errors[0]->getMessage()],Response::HTTP_UNPROCESSABLE_ENTITY);
             } else {
-               $this->reviewRepository->saveReview($review,$data);
+               $this->reviewRepository->saveReview($review,$data,$shopStatus,$userStatus);
                 $response= new JsonResponse(['status' => 'Review created!'], Response::HTTP_CREATED);
             }
         }

@@ -24,13 +24,13 @@ class ReviewRepository extends ServiceEntityRepository
         parent::__construct($registry, Review::class);
         $this->manager = $manager;
     }
-    public function saveReview($review,$data)
+    public function saveReview($review,$data,$shop,$User)
     {
        $review
             ->setContent($data['content'])
             ->setStatus($data['status'])
-            ->setShopId($data['shop_id'])
-            ->setUserId($data['user_id']);
+            ->setShopId($shop)
+            ->setUserId($User);
 
         $this->manager->persist($review);
         $this->manager->flush();
