@@ -19,7 +19,6 @@ class ShopRepository extends ServiceEntityRepository
         parent::__construct($registry, Shop::class);
     }
     public function validateShopId(int $id) {
-        return  $this->findOneBy(['id'=>$id
-        ]);
+        return  $this->find($id);
     }
 }

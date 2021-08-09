@@ -24,35 +24,22 @@ class ReviewRepository extends ServiceEntityRepository
         parent::__construct($registry, Review::class);
         $this->manager = $manager;
     }
-    public function saveReview($content, $status, $shop_id,$user_id)
+    public function saveReview($review,$data)
     {
-        $newReview = new Review();
+       $review
+            ->setContent($data['content'])
+            ->setStatus($data['status'])
+            ->setShopId($data['shop_id'])
+            ->setUserId($data['user_id']);
 
-        $newReview
-            ->setContent($content)
-            ->setStatus($status)
-            ->setShopId($shop_id)
-            ->setUserId($user_id);
-
-        $this->manager->persist($newReview);
+        $this->manager->persist($review);
         $this->manager->flush();
     }
-public function getEmployeeRecord($id)
-{
-    $qb = $this->manager->createQueryBuilder();
-
-    $qb->select('review')
-        ->from('App:Review', 'review')
-        ->where('review.id = :reviewId')
-        ->setParameter('reviewId',$id);
-
-    return $qb->getQuery()->getResult();
-}
     public function updateStatus($id,$status)
     {
-        $record = $this->getEmployeeRecord($id);
-        $record[0]->setStatus($status);
-        $this->manager->persist($record[0]);
+        $record = $this->find($id);
+        $record->setStatus($status);
+        $this->manager->persist($record);
         $this->manager->flush();
     }
 

@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ReviewController extends AbstractController
 {
@@ -25,13 +26,19 @@ class ReviewController extends AbstractController
     private $userRepository;
     private $authorizedApiAccess;
     private $manager;
-    public function __construct(ReviewRepository $reviewRepository,EntityManagerInterface $manager,ShopRepository $shopRepository,UserRepository $userRepository,AutherizedApiAccess $autherizedApiAccess)
+    /**
+     * @var ValidatorInterface
+     */
+    private $validator;
+
+    public function __construct(ReviewRepository $reviewRepository,EntityManagerInterface $manager,ShopRepository $shopRepository,UserRepository $userRepository,AutherizedApiAccess $autherizedApiAccess,ValidatorInterface $validator)
     {
         $this->reviewRepository=$reviewRepository;
         $this->shopRepository=$shopRepository;
         $this->userRepository=$userRepository;
         $this->authorizedApiAccess=$autherizedApiAccess;
         $this->manager=$manager;
+        $this->validator = $validator;
     }
     const ITEMS_PER_PAGE = 4;
     /**
@@ -53,7 +60,6 @@ class ReviewController extends AbstractController
      */
     public function statusUpdate(Request $request,$id,$status)
     {
-//        dd($status);
        $this->reviewRepository->updateStatus($id,$status);
 
         $referer = $request->headers->get('referer');
@@ -68,38 +74,36 @@ class ReviewController extends AbstractController
     public function add(Request $request): Response
     {
         $check=$this->authorizedApiAccess->authorize($request);
+        $response=array();
         if(!$check)
         {
             $data=["message"=>"user is unauthorized"];
             return new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
         }
-
         $data = json_decode($request->getContent(), true);
-
         $userStatus = $this->userRepository->validateUserId($data['user_id']);
-
         $shopStatus=$this->shopRepository->validateShopId($data['shop_id']);
-       if(empty($userStatus))
+       if(!$userStatus)
         {
             $data=["message"=>"user is not found!"];
             $response= new JsonResponse($data, Response::HTTP_NOT_FOUND);
         }
-        elseif (empty($shopStatus))
+        elseif (!$shopStatus)
         {
             $data=["message"=>"shop is not found!"];
             $response= new JsonResponse($data, Response::HTTP_NOT_FOUND);
         }
         else
         {
-            $content = $data['content'];
-            $status = $data['status'];
-            if (empty($content) || empty($status) ) {
-                throw new NotFoundHttpException('Expecting mandatory parameters!');
+            $review= new Review();
+            $errors=$this->validator->validate($review);
+            if (count($errors) > 0) {
+                $response= new JsonResponse(["error"=>$errors[0]->getMessage()],Response::HTTP_UNPROCESSABLE_ENTITY);
+            } else {
+               $this->reviewRepository->saveReview($review,$data);
+                $response= new JsonResponse(['status' => 'Review created!'], Response::HTTP_CREATED);
             }
-            $this->reviewRepository->saveReview($content, $status,$shopStatus,$userStatus);
-           $response= new JsonResponse(['status' => 'Review created!'], Response::HTTP_CREATED);
         }
-//        $this->
         return $response;
   }
 }
