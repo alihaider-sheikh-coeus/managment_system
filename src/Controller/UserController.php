@@ -61,7 +61,7 @@ class UserController extends AbstractController
         return $response;
     }
     /**
-     * @Route("api/admin/delete/{id}", name="delete_admin", methods={"DELETE"})
+     * @Route("api/admin/delete/{id}", name="delete_admin", methods={"DELETE"},requirements={"id"="\d+"})
      */
     public function delete(Request $request,$id): JsonResponse
     {
