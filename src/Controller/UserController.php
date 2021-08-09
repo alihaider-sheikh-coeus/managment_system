@@ -61,7 +61,7 @@ class UserController extends AbstractController
         return $response;
     }
     /**
-     * @Route("api/admin/delete/{id}", name="delete_admin", methods={"DELETE"})
+     * @Route("api/admin/delete/{id}", name="delete_admin", methods={"DELETE"},requirements={"id"="\d+"})
      */
     public function delete(Request $request,$id): JsonResponse
     {
@@ -96,7 +96,7 @@ class UserController extends AbstractController
         }
         else
         {
-            $users = $this->userRepository->retriveSubAdmins();
+          $users = $this->userRepository->retriveSubAdmins($request->get('id'));
             foreach ($users as $user) {
                 array_push($data, [
                     'id' => $user->getId(),
@@ -111,49 +111,21 @@ class UserController extends AbstractController
         }
         return $response;
     }
-    /**
-     * @Route("api/admin/{id}", name="get_one_admin", methods={"GET"})
-     */
-    public function getAdmin($id, Request $request): JsonResponse
-    {
-        $user = $this->userRepository->retriveSubAdminByid($id);
-        $check=$this->authorizedApiAccess->authorize($request);
-
-        if(!$check)
-        {
-            $data=["message"=>"user is unauthorized"];
-            $response= new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
-        }
-        else if (!$user) {
-            $response= new JsonResponse("Record not found", Response::HTTP_NOT_FOUND);
-        }
-        else {
-            $data = [
-                'id' => $user[0]->getId(),
-                'email' => $user[0]->getEmail(),
-                'SuperAdmin' => $user[0]->getSuperAdmin(),
-                'Roles'=>$user[0]->getRoles(),
-            ];
-            $response=new JsonResponse($data, Response::HTTP_OK);
-        }
-        return $response;
-    }
 
     /**
-     * @Route("api/admin/update/{id}", name="update_admin", methods={"PUT"})
+     * @Route("api/admin/update/{id}", name="update_admin", methods={"PUT"},requirements={"id"="\d+"})
      */
     public function update($id, Request $request): JsonResponse
     {
-        $user = $this->userRepository->findOneBy(['id' => $id]);
         $check=$this->authorizedApiAccess->authorize($request);
+        $user=$this->userRepository->validateUserId($id);
         if(!$check)
         {
             $data=["message"=>"user is unauthorized"];
             $response= new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
         }
-        else if (!$user) {
-
-            $response= new JsonResponse("Record not found", Response::HTTP_NOT_FOUND);
+        elseif (!$user) {
+            $response = $this->getDoctrine()->getRepository(Product::class);
         }
         else{
             $data = json_decode($request->getContent(), true);

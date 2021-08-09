@@ -18,47 +18,28 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 class UserRepository extends ServiceEntityRepository
 {
     private $manager,$passwordEncoder;
+
     public function __construct(ManagerRegistry $registry,EntityManagerInterface $manager,UserPasswordEncoderInterface $passwordEncoder)
     {
         parent::__construct($registry, User::class);
         $this->passwordEncoder=$passwordEncoder;
         $this->manager = $manager;
     }
-    public function retriveSubAdmins()
+
+    public function retriveSubAdmins($id = null)
     {
         $qb = $this->manager->createQueryBuilder();
-
         $qb->select('user')
             ->from('App:User', 'user')
-
             ->where("user.roles LIKE :role_admin")
             ->setParameter( 'role_admin' , '%ROLE_ADMIN%');
 
-      return  $qb->getQuery()->getResult();
-  }
-    public function retriveSubAdminByid($id)
-    {
-        $qb = $this->manager->createQueryBuilder();
-
-        $qb->select('user')
-            ->from('App:User', 'user')
-            ->where("user.roles LIKE :role_admin")
-            ->andWhere("user.id = :id")
-            ->setParameter( 'role_admin','%ROLE_ADMIN%')
-            ->setParameter('id',$id);
+        if ($id !== null) {
+            $qb->andWhere("user.id = :id")
+                ->setParameter('id',$id);
+        }
         return  $qb->getQuery()->getResult();
-    }
-    public function getUserObject($id)
-    {
-        $qb = $this->manager->createQueryBuilder();
-
-        $qb->select('user')
-            ->from('App:User', 'user')
-            ->where('user.id = :userId')
-            ->setParameter('userId',$id);
-
-        return $qb->getQuery()->getResult();
-    }
+  }
     public function saveAdmin($newUser,$data)
     {
       $encoded = $this->passwordEncoder->encodePassword($newUser, $data['password']);
@@ -92,16 +73,16 @@ class UserRepository extends ServiceEntityRepository
      }
     public function passwordUpdate($id,$newPassword)
     {
-        $user=$this->getUserObject($id);
-        $encoded = $this->passwordEncoder->encodePassword($user[0], $newPassword);
-        $user[0]->setPassword($encoded);
-        $this->manager->persist($user[0]);
+
+        $user=$this->find($id);
+        $encoded = $this->passwordEncoder->encodePassword($user, $newPassword);
+        $user->setPassword($encoded);
+        $this->manager->persist($user);
         $this->manager->flush();
     }
 
 
-    public function validateUserId(int $id) {
-        return  $this->findOneBy(['id'=>$id
-        ]);
+    public function validateUserId($id) {
+        return  $this->find($id);
     }
 }

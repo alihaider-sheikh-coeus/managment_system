@@ -26,6 +26,7 @@ class Review
      *     match=false,
      *     message="Your review cannot contain a number"
      * )
+     * @Assert\NotBlank(message="content cant be blank")
      */
     private $content;
 
@@ -43,6 +44,7 @@ class Review
 
     /**
      * @ORM\Column(type="string", length=255)
+     * @Assert\NotBlank(message="status feild cant be blank")
      */
     private $status;
 
