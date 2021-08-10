@@ -43,14 +43,12 @@ class ReviewRepository extends ServiceEntityRepository
         $this->manager->persist($record);
         $this->manager->flush();
     }
-    public function updateReviewsStatus(bool $status=true)
+    public function updateReviewsStatus($status)
     {
         $reviews=$this->findAll();
-        $setStatus=(!$status)?"Rejected":"Approved";
-//        dd("hello");
         foreach ($reviews as $review)
         {
-            ($review->getStatus() == "pending") ? $review->setStatus($setStatus):$review->setStatus($review->getStatus());
+            ($review->getStatus() == "pending") ? $review->setStatus($status):$review->setStatus($review->getStatus());
             $this->manager->persist($review);
         }
         $this->manager->flush();

@@ -31,14 +31,19 @@ class ReviewStatusUpdate extends Command
     }
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $status= (bool)$input->getArgument('status');
-        try {
-            $this->reviewRepository->updateReviewsStatus($status);
+        $status= $input->getArgument('status');
+        if ($status === "false") {
+            $this->reviewRepository->updateReviewsStatus("Rejected");
         }
-        catch (\Exception $exception){
-            echo $exception->getMessage();
+        else
+        {
+            try {
+                $this->reviewRepository->updateReviewsStatus("Approved");
+            }
+            catch (\Exception $exception){
+                echo $exception->getMessage();
+            }
         }
-        $this->reviewRepository->updateReviewsStatus($status);
-    }
+  }
 
 }
