@@ -32,18 +32,8 @@ class ReviewStatusUpdate extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $status= $input->getArgument('status');
-        if ($status === "false") {
-            $this->reviewRepository->updateReviewsStatus("Rejected");
-        }
-        else
-        {
-            try {
-                $this->reviewRepository->updateReviewsStatus("Approved");
-            }
-            catch (\Exception $exception){
-                echo $exception->getMessage();
-            }
-        }
+         ($status === "false") ? $this->reviewRepository->updateReviewsStatus("Rejected")
+             :$this->reviewRepository->updateReviewsStatus("Approved");
   }
 
 }
