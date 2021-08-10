@@ -47,6 +47,7 @@ class ReviewRepository extends ServiceEntityRepository
     {
         $reviews=$this->findAll();
         $setStatus=(!$status)?"Rejected":"Approved";
+//        dd("hello");
         foreach ($reviews as $review)
         {
             ($review->getStatus() == "pending") ? $review->setStatus($setStatus):$review->setStatus($review->getStatus());
