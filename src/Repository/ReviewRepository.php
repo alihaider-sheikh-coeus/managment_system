@@ -8,6 +8,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use phpDocumentor\Reflection\Types\Boolean;
 
 /**
  * @method Review|null find($id, $lockMode = null, $lockVersion = null)
@@ -40,6 +41,17 @@ class ReviewRepository extends ServiceEntityRepository
         $record = $this->find($id);
         $record->setStatus($status);
         $this->manager->persist($record);
+        $this->manager->flush();
+    }
+    public function updateReviewsStatus(bool $status=true)
+    {
+        $reviews=$this->findAll();
+        $setStatus=(!$status)?"Rejected":"Approved";
+        foreach ($reviews as $review)
+        {
+            ($review->getStatus() == "pending") ? $review->setStatus($setStatus):$review->setStatus($review->getStatus());
+            $this->manager->persist($review);
+        }
         $this->manager->flush();
     }
 
