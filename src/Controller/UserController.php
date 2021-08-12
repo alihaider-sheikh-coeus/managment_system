@@ -52,7 +52,7 @@ class UserController extends AbstractController
             $errors=$this->validator->validate($newUser);
 
             if (count($errors) > 0) {
-                $response= new JsonResponse(["error"=>$errors[0]->getMessage()],Response::HTTP_UNPROCESSABLE_ENTITY);
+                throw new \Exception($errors[0]->getMessage());;
             } else {
                 $this->userRepository->saveAdmin($newUser,$data);
                 $response= new  JsonResponse(['status' => 'Admin created!'], Response::HTTP_CREATED);
@@ -70,10 +70,12 @@ class UserController extends AbstractController
         if(!$check)
         {
             $data=["message"=>"user is unauthorized"];
-            $response= new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
+            throw new \Exception($data,Response::HTTP_UNAUTHORIZED);
         }
         else if (!$user) {
-            $response= new JsonResponse("Record not found", Response::HTTP_NOT_FOUND);
+            $data=["message"=>"Record not found"];
+            throw new \Exception($data,Response::HTTP_NOT_FOUND);
+
         }
         else {
             $this->userRepository->removeAdmin($user);
@@ -92,7 +94,7 @@ class UserController extends AbstractController
         if(!$check)
         {
             $data=["message"=>"user is unauthorized"];
-            $response= new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
+            throw new \Exception($data,Response::HTTP_UNAUTHORIZED);
         }
         else
         {
@@ -122,10 +124,11 @@ class UserController extends AbstractController
         if(!$check)
         {
             $data=["message"=>"user is unauthorized"];
-            $response= new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
+            throw new \Exception($data,Response::HTTP_UNAUTHORIZED);
         }
         elseif (!$user) {
-            $response = $this->getDoctrine()->getRepository(Product::class);
+            $data=["message"=>"Record not found"];
+            throw new \Exception($data,Response::HTTP_NOT_FOUND);
         }
         else{
             $data = json_decode($request->getContent(), true);

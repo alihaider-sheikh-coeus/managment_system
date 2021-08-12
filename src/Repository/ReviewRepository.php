@@ -8,6 +8,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use phpDocumentor\Reflection\Types\Boolean;
 
 /**
  * @method Review|null find($id, $lockMode = null, $lockVersion = null)
@@ -17,16 +18,17 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class ReviewRepository extends ServiceEntityRepository
 {
-    private $manager,$queryBuilder;
+    private $manager, $queryBuilder;
 
-    public function __construct(ManagerRegistry $registry,EntityManagerInterface $manager)
+    public function __construct(ManagerRegistry $registry, EntityManagerInterface $manager)
     {
         parent::__construct($registry, Review::class);
         $this->manager = $manager;
     }
-    public function saveReview($review,$data,$shop,$User)
+
+    public function saveReview($review, $data, $shop, $User)
     {
-       $review
+        $review
             ->setContent($data['content'])
             ->setStatus($data['status'])
             ->setShopId($shop)
@@ -35,7 +37,8 @@ class ReviewRepository extends ServiceEntityRepository
         $this->manager->persist($review);
         $this->manager->flush();
     }
-    public function updateStatus($id,$status)
+
+    public function updateStatus($id, $status)
     {
         $record = $this->find($id);
         $record->setStatus($status);
@@ -43,4 +46,18 @@ class ReviewRepository extends ServiceEntityRepository
         $this->manager->flush();
     }
 
+    public function updateReviewsStatus($testStatus)
+    {
+        $queryBuilder = $this->createQueryBuilder('r')
+            ->select('r')
+            ->where('r.status = :setStatus')
+            ->setParameter('setStatus', "pending");
+        $reviews=$queryBuilder->getQuery()->getResult();
+
+         foreach ($reviews as $review)
+        {
+            $review->setStatus($testStatus);
+        }
+        $this->manager->flush();
+  }
 }
