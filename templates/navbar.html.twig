@@ -1,8 +1,29 @@
 
 {% extends 'base.html.twig' %}
 {% block navbar %}
-  <nav class="navbar navbar-light" style="background-color: #e3f2fd;">
-  <a class="navbar-brand" href="{{ path('reset_password') }}">ResetPassword</a>
-    <a class="navbar-brand" href="{{ path('app_logout') }}">logout</a>
-</nav>
+
+<style>
+    .active
+    {
+        font-weight: bold;
+        background-color: silver;
+  }
+</style>
+
+
+    <ul class="nav navbar-nav">
+        <li class="{% if app.request.attributes.get('_route') == 'review' %}active{% endif %}">
+            <a href="{{ path('review') }}">Home</a>
+        </li>
+
+        <li class="{% if app.request.attributes.get('_route') == 'reset_password' %}active{% endif %}">
+            <a href="{{ path('reset_password') }}">Reset Password</a>
+        </li>
+
+        <li class="{% if app.request.attributes.get('_route') == 'app_logout' %}active{% endif %}">
+            <a href="{{ path('app_logout') }}">Logout</a>
+        </li>
+    </ul>
+
+
 {% endblock %}

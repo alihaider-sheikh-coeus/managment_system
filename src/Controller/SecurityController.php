@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Repository\UserRepository;
+use App\Service\PaswordResetValidations;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,10 +17,15 @@ class SecurityController extends AbstractController
      * @var UserRepository
      */
     private $userRepository;
+    /**
+     * @var PaswordResetValidations
+     */
+    private $passwordResetValidations;
 
-    public function __construct(UserRepository $userRepository)
+    public function __construct(UserRepository $userRepository,PaswordResetValidations $paswordResetValidations)
     {
         $this->userRepository = $userRepository;
+        $this->passwordResetValidations = $paswordResetValidations;
     }
 
     /**
@@ -60,28 +66,19 @@ class SecurityController extends AbstractController
     public function resetPasswordAction(Request $request):Response
     {
         $user=$this->getUser();
+        $check=true;
         $currentPassword= $request->request->all()['CurrentPassword'];
         $newPassword = $request->request->all()['newPassword'];
         $confirmPassword=$request->request->all()['confirmPassword'];
-         $status = $this->userRepository->userPasswordMatch($user,$currentPassword);
-//        dd($status);
-        if(!$status)
-        {
-             $this->addFlash('error','current password is wrong');
+        $status = $this->userRepository->userPasswordMatch($user,$currentPassword);
+        $check= (!$status) ? false:true;
+        $validations=$this->passwordResetValidations->validateFields($status,$newPassword,$currentPassword);
+        $check=($validations)?false:true;
+        if ($check) {
+            $this->userRepository->passwordUpdate($user->getId(),$newPassword);
+            $this->addFlash('success','password updated successfully');
         }
-        if(empty($newPassword) || empty($confirmPassword))
-        {
-            $this->addFlash('error','new password fields cant be empty');
-        }
-        elseif ($newPassword!==$confirmPassword )
-        {
-            $this->addFlash('error','passwords does not match');
-        }
-        else
-        {
-                $this->userRepository->passwordUpdate($user->getId(),$newPassword);
-                $this->addFlash('success','password updated successfully');
-        }
+        $this->addFlash('error','password cant be update');
         return $this->redirectToRoute('review');
    }
 }
