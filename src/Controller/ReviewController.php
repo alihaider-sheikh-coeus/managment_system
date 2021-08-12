@@ -17,6 +17,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -53,12 +54,14 @@ class ReviewController extends AbstractController
      */
     public function index(Request $request,PaginationService $pagination):Response
     {
-        $query   = $this->getDoctrine()->getManager()->getRepository(Review::class)->createQueryBuilder('p');
 
+        $language=($request->query->get('query')) ?  $request->query->get('query'):null;
+        $query   = $this->getDoctrine()->getManager()->getRepository(Review::class)->createQueryBuilder('p');
 
         $results = $pagination->paginate($query, $request, self::ITEMS_PER_PAGE);
 
         return $this->render('review/index.html.twig', [
+            'language'=>$language,
             'reviews' => $results,
             'lastPage' => $pagination->lastPage($results)
         ]);

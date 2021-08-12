@@ -56,15 +56,20 @@ class SecurityController extends AbstractController
     /**
      * @Route("/resetPassword", name="reset_password")
      */
-    public function resetPassword():Response
+    public function resetPassword(Request $request):Response
     {
-        return  $this->render('security/reset_password.html.twig');
+        $language=($request->query->get('query')) ?  $request->query->get('query'):null;
+        return  $this->render('security/reset_password.html.twig',
+            [
+                'language'=>$language
+            ]);
     }
     /**
      * @Route("/resetPasswordAction", name="reset_password_action")
      */
     public function resetPasswordAction(Request $request):Response
     {
+
         $user=$this->getUser();
         $check=true;
         $currentPassword= $request->request->all()['CurrentPassword'];
