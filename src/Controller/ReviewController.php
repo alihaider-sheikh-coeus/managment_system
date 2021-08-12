@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Review;
+use App\EventListener\apiCallEvent;
 use App\Repository\ReviewRepository;
 use App\Repository\ShopRepository;
 use App\Repository\UserRepository;
@@ -12,6 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use phpDocumentor\Reflection\Types\Float_;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,8 +32,12 @@ class ReviewController extends AbstractController
      * @var ValidatorInterface
      */
     private $validator;
+    /**
+     * @var EventDispatcherInterface
+     */
+    private $eventDispatcher;
 
-    public function __construct(ReviewRepository $reviewRepository,EntityManagerInterface $manager,ShopRepository $shopRepository,UserRepository $userRepository,AutherizedApiAccess $autherizedApiAccess,ValidatorInterface $validator)
+    public function __construct(ReviewRepository $reviewRepository,EntityManagerInterface $manager,ShopRepository $shopRepository,UserRepository $userRepository,AutherizedApiAccess $autherizedApiAccess,ValidatorInterface $validator,EventDispatcherInterface $eventDispatcher)
     {
         $this->reviewRepository=$reviewRepository;
         $this->shopRepository=$shopRepository;
@@ -39,6 +45,7 @@ class ReviewController extends AbstractController
         $this->authorizedApiAccess=$autherizedApiAccess;
         $this->manager=$manager;
         $this->validator = $validator;
+        $this->eventDispatcher = $eventDispatcher;
     }
     const ITEMS_PER_PAGE = 4;
     /**
@@ -96,11 +103,14 @@ class ReviewController extends AbstractController
         else
         {
             $review= new Review();
+            $review->setContent($data['content']);
+            $review->setStatus($data['status']);
             $errors=$this->validator->validate($review);
             if (count($errors) > 0) {
-                $response= new JsonResponse(["error"=>$errors[0]->getMessage()],Response::HTTP_UNPROCESSABLE_ENTITY);
+                throw new \Exception($errors[0]->getMessage());
+
             } else {
-               $this->reviewRepository->saveReview($review,$data);
+               $this->reviewRepository->saveReview($review,$data,$shopStatus,$userStatus);
                 $response= new JsonResponse(['status' => 'Review created!'], Response::HTTP_CREATED);
             }
         }

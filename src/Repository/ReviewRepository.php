@@ -8,6 +8,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use phpDocumentor\Reflection\Types\Boolean;
 
 /**
  * @method Review|null find($id, $lockMode = null, $lockVersion = null)
@@ -24,13 +25,13 @@ class ReviewRepository extends ServiceEntityRepository
         parent::__construct($registry, Review::class);
         $this->manager = $manager;
     }
-    public function saveReview($review,$data)
+    public function saveReview($review,$data,$shop,$User)
     {
        $review
             ->setContent($data['content'])
             ->setStatus($data['status'])
-            ->setShopId($data['shop_id'])
-            ->setUserId($data['user_id']);
+            ->setShopId($shop)
+            ->setUserId($User);
 
         $this->manager->persist($review);
         $this->manager->flush();
@@ -40,6 +41,16 @@ class ReviewRepository extends ServiceEntityRepository
         $record = $this->find($id);
         $record->setStatus($status);
         $this->manager->persist($record);
+        $this->manager->flush();
+    }
+    public function updateReviewsStatus($status)
+    {
+        $reviews=$this->findAll();
+        foreach ($reviews as $review)
+        {
+            ($review->getStatus() == "pending") ? $review->setStatus($status):$review->setStatus($review->getStatus());
+            $this->manager->persist($review);
+        }
         $this->manager->flush();
     }
 
