@@ -48,6 +48,7 @@ class ReviewController extends AbstractController
     {
         $query   = $this->getDoctrine()->getManager()->getRepository(Review::class)->createQueryBuilder('p');
 
+
         $results = $pagination->paginate($query, $request, self::ITEMS_PER_PAGE);
 
         return $this->render('review/index.html.twig', [
