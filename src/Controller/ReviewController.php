@@ -94,12 +94,12 @@ class ReviewController extends AbstractController
        if(!$userStatus)
         {
             $data=["message"=>"user is not found!"];
-            $response= new JsonResponse($data, Response::HTTP_NOT_FOUND);
+            throw new \Exception($data['message'],Response::HTTP_NOT_FOUND);
         }
         elseif (!$shopStatus)
         {
             $data=["message"=>"shop is not found!"];
-            $response= new JsonResponse($data, Response::HTTP_NOT_FOUND);
+            throw new \Exception($data['message'],Response::HTTP_NOT_FOUND);
         }
         else
         {
