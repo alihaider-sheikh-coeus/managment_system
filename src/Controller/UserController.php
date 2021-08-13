@@ -38,7 +38,7 @@ class UserController extends AbstractController
         if(!$check)
         {
             $data=["message"=>"user is unauthorized"];
-            $response= new JsonResponse($data, Response::HTTP_UNAUTHORIZED);
+            throw new \Exception($data['message'],Response::HTTP_UNAUTHORIZED);
         }
         else {
 
@@ -70,11 +70,11 @@ class UserController extends AbstractController
         if(!$check)
         {
             $data=["message"=>"user is unauthorized"];
-            throw new \Exception($data,Response::HTTP_UNAUTHORIZED);
+            throw new \Exception($data['message'],Response::HTTP_UNAUTHORIZED);
         }
         else if (!$user) {
             $data=["message"=>"Record not found"];
-            throw new \Exception($data,Response::HTTP_NOT_FOUND);
+            throw new \Exception($data['message'],Response::HTTP_NOT_FOUND);
 
         }
         else {
@@ -94,7 +94,7 @@ class UserController extends AbstractController
         if(!$check)
         {
             $data=["message"=>"user is unauthorized"];
-            throw new \Exception($data,Response::HTTP_UNAUTHORIZED);
+            throw new \Exception($data['message'],Response::HTTP_UNAUTHORIZED);
         }
         else
         {
@@ -124,11 +124,11 @@ class UserController extends AbstractController
         if(!$check)
         {
             $data=["message"=>"user is unauthorized"];
-            throw new \Exception($data,Response::HTTP_UNAUTHORIZED);
+            throw new \Exception($data['message'],Response::HTTP_UNAUTHORIZED);
         }
         elseif (!$user) {
             $data=["message"=>"Record not found"];
-            throw new \Exception($data,Response::HTTP_NOT_FOUND);
+            throw new \Exception($data['message'],Response::HTTP_NOT_FOUND);
         }
         else{
             $data = json_decode($request->getContent(), true);

@@ -18,16 +18,17 @@ use phpDocumentor\Reflection\Types\Boolean;
  */
 class ReviewRepository extends ServiceEntityRepository
 {
-    private $manager,$queryBuilder;
+    private $manager, $queryBuilder;
 
-    public function __construct(ManagerRegistry $registry,EntityManagerInterface $manager)
+    public function __construct(ManagerRegistry $registry, EntityManagerInterface $manager)
     {
         parent::__construct($registry, Review::class);
         $this->manager = $manager;
     }
-    public function saveReview($review,$data,$shop,$User)
+
+    public function saveReview($review, $data, $shop, $User)
     {
-       $review
+        $review
             ->setContent($data['content'])
             ->setStatus($data['status'])
             ->setShopId($shop)
@@ -36,22 +37,27 @@ class ReviewRepository extends ServiceEntityRepository
         $this->manager->persist($review);
         $this->manager->flush();
     }
-    public function updateStatus($id,$status)
+
+    public function updateStatus($id, $status)
     {
         $record = $this->find($id);
         $record->setStatus($status);
         $this->manager->persist($record);
         $this->manager->flush();
     }
-    public function updateReviewsStatus($status)
+
+    public function updateReviewsStatus($testStatus)
     {
-        $reviews=$this->findAll();
-        foreach ($reviews as $review)
+        $queryBuilder = $this->createQueryBuilder('r')
+            ->select('r')
+            ->where('r.status = :setStatus')
+            ->setParameter('setStatus', "pending");
+        $reviews=$queryBuilder->getQuery()->getResult();
+
+         foreach ($reviews as $review)
         {
-            ($review->getStatus() == "pending") ? $review->setStatus($status):$review->setStatus($review->getStatus());
-            $this->manager->persist($review);
+            $review->setStatus($testStatus);
         }
         $this->manager->flush();
-    }
-
+  }
 }

@@ -8,6 +8,7 @@ use App\Repository\ReviewRepository;
 use App\Repository\ShopRepository;
 use App\Repository\UserRepository;
 use App\Service\AutherizedApiAccess;
+use App\Service\MailSender;
 use App\Service\PaginationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -17,6 +18,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -36,8 +38,12 @@ class ReviewController extends AbstractController
      * @var EventDispatcherInterface
      */
     private $eventDispatcher;
+    /**
+     * @var MailSender
+     */
+    private $mailSender;
 
-    public function __construct(ReviewRepository $reviewRepository,EntityManagerInterface $manager,ShopRepository $shopRepository,UserRepository $userRepository,AutherizedApiAccess $autherizedApiAccess,ValidatorInterface $validator,EventDispatcherInterface $eventDispatcher)
+    public function __construct(ReviewRepository $reviewRepository,EntityManagerInterface $manager,ShopRepository $shopRepository,UserRepository $userRepository,AutherizedApiAccess $autherizedApiAccess,ValidatorInterface $validator,EventDispatcherInterface $eventDispatcher,MailSender $mailSender)
     {
         $this->reviewRepository=$reviewRepository;
         $this->shopRepository=$shopRepository;
@@ -46,6 +52,7 @@ class ReviewController extends AbstractController
         $this->manager=$manager;
         $this->validator = $validator;
         $this->eventDispatcher = $eventDispatcher;
+        $this->mailSender = $mailSender;
     }
     const ITEMS_PER_PAGE = 4;
     /**
@@ -53,11 +60,14 @@ class ReviewController extends AbstractController
      */
     public function index(Request $request,PaginationService $pagination):Response
     {
+
+        $language=($request->query->get('query')) ?  $request->query->get('query'):null;
         $query   = $this->getDoctrine()->getManager()->getRepository(Review::class)->createQueryBuilder('p');
 
         $results = $pagination->paginate($query, $request, self::ITEMS_PER_PAGE);
 
         return $this->render('review/index.html.twig', [
+            'language'=>$language,
             'reviews' => $results,
             'lastPage' => $pagination->lastPage($results)
         ]);
@@ -93,12 +103,12 @@ class ReviewController extends AbstractController
        if(!$userStatus)
         {
             $data=["message"=>"user is not found!"];
-            $response= new JsonResponse($data, Response::HTTP_NOT_FOUND);
+            throw new \Exception($data['message'],Response::HTTP_NOT_FOUND);
         }
         elseif (!$shopStatus)
         {
             $data=["message"=>"shop is not found!"];
-            $response= new JsonResponse($data, Response::HTTP_NOT_FOUND);
+            throw new \Exception($data['message'],Response::HTTP_NOT_FOUND);
         }
         else
         {
@@ -110,10 +120,15 @@ class ReviewController extends AbstractController
                 throw new \Exception($errors[0]->getMessage());
 
             } else {
-               $this->reviewRepository->saveReview($review,$data,$shopStatus,$userStatus);
+
+                $this->reviewRepository->saveReview($review,$data,$shopStatus,$userStatus);
+                $superAdmins =$this->userRepository->retriveSuperAdmins();
+                $superAdmins= array_column($superAdmins,'email');
+                $this->mailSender->sendMail($review,$superAdmins,$userStatus,$shopStatus);
                 $response= new JsonResponse(['status' => 'Review created!'], Response::HTTP_CREATED);
             }
         }
         return $response;
   }
+
 }

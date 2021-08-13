@@ -1,8 +1,82 @@
 
 {% extends 'base.html.twig' %}
 {% block navbar %}
-  <nav class="navbar navbar-light" style="background-color: #e3f2fd;">
-  <a class="navbar-brand" href="{{ path('reset_password') }}">ResetPassword</a>
-    <a class="navbar-brand" href="{{ path('app_logout') }}">logout</a>
-</nav>
+
+<style>
+    .active
+    {
+        font-weight: bold;
+        background-color: silver;
+  }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f9f9f9;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 1;
+    }
+
+    .dropdown-content a {
+        float: none;
+        color: black;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+        text-align: left;
+    }
+
+    .dropdown-content a:hover {
+        background-color: #ddd;
+    }
+
+    .show {
+        display: block;
+    }
+</style>
+{% set route = app.request.attributes.get('_route') %}
+
+    <ul class="nav navbar-nav">
+        <li class="{% if app.request.attributes.get('_route') == 'review' %}active{% endif %}">
+            <a href="{{ path('review') }}">{% trans into language %}Home{% endtrans %}</a>
+        </li>
+
+        <li class="{% if app.request.attributes.get('_route') == 'reset_password' %}active{% endif %}">
+            <a href="{{ path('reset_password') }}">{% trans into language %}Reset_Password{% endtrans %}</a>
+        </li>
+
+        <li class="{% if app.request.attributes.get('_route') == 'app_logout' %}active{% endif %}">
+            <a href="{{ path('app_logout') }}">{% trans into language %}Logout{% endtrans %}</a>
+        </li>
+        <li>
+        <a class="dropbtn" onclick="myFunction()">Select a language <i class="fa fa-caret-down"></i></a>
+        <div class="dropdown-content" id="myDropdown">
+            <a href="{{ path(route ,{'query': 'en' }) }}">English</a>
+            <a href="{{ path(route ,{'query': 'de' }) }} ">German</a>
+            <a href="{{ path(route ,{'query': 'cn' }) }}">Chinese</a>
+        </div>
+
+        </li>
+
+    </ul>
+    <script>
+        /* When the user clicks on the button,
+        toggle between hiding and showing the dropdown content */
+        function myFunction() {
+            document.getElementById("myDropdown").classList.toggle("show");
+        }
+
+        // Close the dropdown if the user clicks outside of it
+        window.onclick = function(e) {
+            if (!e.target.matches('.dropbtn')) {
+                var myDropdown = document.getElementById("myDropdown");
+                if (myDropdown.classList.contains('show')) {
+                    myDropdown.classList.remove('show');
+                }
+            }
+        }
+    </script>
+
+
 {% endblock %}
