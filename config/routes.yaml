@@ -1,6 +1,3 @@
-#managment_system:
-#  resource: "@AppBundle/Controller/"
-#  type:     annotation
-#  prefix:   /{_locale}/
-#  requirements:
-#    _locale: %locales%
+#index:
+#    path: /
+#    controller: App\Controller\DefaultController::index
