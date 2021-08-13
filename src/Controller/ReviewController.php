@@ -8,6 +8,7 @@ use App\Repository\ReviewRepository;
 use App\Repository\ShopRepository;
 use App\Repository\UserRepository;
 use App\Service\AutherizedApiAccess;
+use App\Service\MailSender;
 use App\Service\PaginationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\Pagination\Paginator;
@@ -37,8 +38,12 @@ class ReviewController extends AbstractController
      * @var EventDispatcherInterface
      */
     private $eventDispatcher;
+    /**
+     * @var MailSender
+     */
+    private $mailSender;
 
-    public function __construct(ReviewRepository $reviewRepository,EntityManagerInterface $manager,ShopRepository $shopRepository,UserRepository $userRepository,AutherizedApiAccess $autherizedApiAccess,ValidatorInterface $validator,EventDispatcherInterface $eventDispatcher)
+    public function __construct(ReviewRepository $reviewRepository,EntityManagerInterface $manager,ShopRepository $shopRepository,UserRepository $userRepository,AutherizedApiAccess $autherizedApiAccess,ValidatorInterface $validator,EventDispatcherInterface $eventDispatcher,MailSender $mailSender)
     {
         $this->reviewRepository=$reviewRepository;
         $this->shopRepository=$shopRepository;
@@ -47,6 +52,7 @@ class ReviewController extends AbstractController
         $this->manager=$manager;
         $this->validator = $validator;
         $this->eventDispatcher = $eventDispatcher;
+        $this->mailSender = $mailSender;
     }
     const ITEMS_PER_PAGE = 4;
     /**
@@ -114,10 +120,15 @@ class ReviewController extends AbstractController
                 throw new \Exception($errors[0]->getMessage());
 
             } else {
-               $this->reviewRepository->saveReview($review,$data,$shopStatus,$userStatus);
+
+                $this->reviewRepository->saveReview($review,$data,$shopStatus,$userStatus);
+                $superAdmins =$this->userRepository->retriveSuperAdmins();
+                $superAdmins= array_column($superAdmins,'email');
+                $this->mailSender->sendMail($review,$superAdmins,$userStatus,$shopStatus);
                 $response= new JsonResponse(['status' => 'Review created!'], Response::HTTP_CREATED);
             }
         }
         return $response;
   }
+
 }

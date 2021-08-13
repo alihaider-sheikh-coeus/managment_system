@@ -40,6 +40,16 @@ class UserRepository extends ServiceEntityRepository
         }
         return  $qb->getQuery()->getResult();
   }
+    public function retriveSuperAdmins()
+    {
+        $qb = $this->manager->createQueryBuilder();
+        $qb->select('user.email')
+            ->from('App:User', 'user')
+            ->where("user.roles LIKE :role_admin")
+            ->setParameter( 'role_admin' , '%ROLE_SUPER_ADMIN%');
+        return  $qb->getQuery()->getResult()
+            ;
+    }
     public function saveAdmin($newUser,$data)
     {
       $encoded = $this->passwordEncoder->encodePassword($newUser, $data['password']);
